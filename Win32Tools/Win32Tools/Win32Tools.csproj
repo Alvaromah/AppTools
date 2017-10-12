@@ -44,7 +44,9 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\WebApiClient.cs" />
     <Compile Include="Tools\Lorem.cs" />
+    <Compile Include="XSamples\SampleLorem.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

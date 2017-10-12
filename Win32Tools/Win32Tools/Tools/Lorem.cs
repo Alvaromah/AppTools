@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
 
-namespace AppTools
+namespace Win32Tools
 {
     static public class Lorem
     {
