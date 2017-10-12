@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace WebSample.Controllers
 {
@@ -15,23 +16,29 @@ namespace WebSample.Controllers
         public async Task<IActionResult> Get()
         {
             await Task.FromResult(true);
-            return Ok(new string[] { "value1", "value2" });
+            return Ok();
         }
 
         // GET api/values/5
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id, string param1, string param2)
         {
+            if (id == 0)
+            {
+                return StatusCode((int)HttpStatusCode.BadRequest, "Id cannot be zero.");
+            }
+
             await Task.FromResult(true);
             return Ok($"values {id}, {param1}, {param2}");
         }
 
         // POST api/values
-        [HttpPost]
-        public async Task<IActionResult> Post(string id, [FromBody]string value)
+        [HttpPost("{id}")]
+        public async Task<IActionResult> Post(int id, [FromBody]MyClass value)
         {
             await Task.FromResult(true);
-            return Ok($"values {id}, {value}");
+            value.Id = id;
+            return Ok(value);
         }
 
         // PUT api/values/5
@@ -48,6 +55,17 @@ namespace WebSample.Controllers
         {
             await Task.FromResult(true);
             return Ok($"values {id}, {value}");
+        }
+    }
+
+    public class MyClass
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+
+        public override string ToString()
+        {
+            return $"[Id = {Id}, Name = {Name}]";
         }
     }
 }

@@ -1,8 +1,176 @@
 ﻿using System;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Threading.Tasks;
+
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using Newtonsoft.Json.Converters;
 
 namespace Win32Tools
 {
-    public class WebApiClient
+    #region QueryParam
+    public class QueryParam
     {
+        static public QueryParam Create(string name, object value)
+        {
+            return new QueryParam(name, value);
+        }
+
+        public QueryParam(string name, object value)
+        {
+            Name = name;
+            Value = $"{value}";
+        }
+
+        public string Name { get; set; }
+        public string Value { get; set; }
+
+        override public string ToString()
+        {
+            return $"{Name}={Value}";
+        }
+    }
+    #endregion
+
+    public class WebApiClient : IDisposable
+    {
+        #region Constructors
+        public WebApiClient()
+        {
+            HttpClient = new HttpClient();
+            HttpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        }
+        public WebApiClient(Uri baseAddressUri) : this()
+        {
+            HttpClient.BaseAddress = baseAddressUri;
+        }
+        public WebApiClient(string baseAddressUriString) : this(new Uri(baseAddressUriString))
+        {
+        }
+        #endregion
+
+        public HttpClient HttpClient { get; private set; }
+        public Uri BaseAddress { get; set; }
+
+        public HttpRequestHeaders DefaultRequestHeaders
+        {
+            get => HttpClient.DefaultRequestHeaders;
+        }
+
+        #region Authorization
+        public AuthenticationHeaderValue Authorization
+        {
+            get => DefaultRequestHeaders.Authorization;
+            set => DefaultRequestHeaders.Authorization = value;
+        }
+
+        public string AuthorizationToken
+        {
+            get => Authorization != null ? DefaultRequestHeaders.Authorization.Parameter : null;
+            set => Authorization = new AuthenticationHeaderValue("Bearer", value);
+        }
+        #endregion
+
+        #region JsonSerializerSettings
+        private JsonSerializerSettings _jsonSerializerSettings = null;
+
+        public JsonSerializerSettings JsonSerializerSettings
+        {
+            get => _jsonSerializerSettings ?? (_jsonSerializerSettings = CreateJsonSettings());
+            set => _jsonSerializerSettings = value;
+        }
+
+        private JsonSerializerSettings CreateJsonSettings()
+        {
+            var jsonSettings = new JsonSerializerSettings
+            {
+                ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                DateTimeZoneHandling = DateTimeZoneHandling.Utc,
+                NullValueHandling = NullValueHandling.Ignore
+            };
+            jsonSettings.Converters.Add(new StringEnumConverter());
+            return jsonSettings;
+        }
+        #endregion
+
+        // GET
+        public async Task<TResult> GetAsync<TResult>(string path, params QueryParam[] parameters)
+        {
+            string json = await GetAsync(path, parameters);
+            return JsonConvert.DeserializeObject<TResult>(json);
+        }
+
+        public async Task<string> GetAsync(string path, params QueryParam[] parameters)
+        {
+            return await SendRequestAsync(path, HttpMethod.Get, null, parameters);
+        }
+
+        // POST
+        public async Task<TResult> PostAsync<TResult>(string path, object value, params QueryParam[] parameters)
+        {
+            string json = JsonConvert.SerializeObject(value, JsonSerializerSettings);
+            return await PostAsync<TResult>(path, json, parameters);
+        }
+
+        public async Task<TResult> PostAsync<TResult>(string path, string content = null, params QueryParam[] parameters)
+        {
+            string json = await PostAsync(path, content, parameters);
+            return JsonConvert.DeserializeObject<TResult>(json);
+        }
+
+        public async Task<string> PostAsync(string path, string content = null, params QueryParam[] parameters)
+        {
+            return await SendRequestAsync(path, HttpMethod.Post, content, parameters);
+        }
+
+        public async Task<string> SendRequestAsync(string path, HttpMethod method, string content = null, params QueryParam[] parameters)
+        {
+            string requestUri = BuildRequestUri(path, parameters);
+
+            var message = new HttpRequestMessage(method, requestUri);
+            if (content != null)
+            {
+                message.Content = new StringContent(content, System.Text.Encoding.UTF8, "application/json");
+            }
+
+            using (var response = await HttpClient.SendAsync(message))
+            {
+                string responseContent = await response.Content.ReadAsStringAsync();
+                if (response.IsSuccessStatusCode)
+                {
+                    return responseContent;
+                }
+                throw new HttpRequestException($"{(int)response.StatusCode} {response.StatusCode}: {responseContent}");
+            }
+        }
+
+        private static string BuildRequestUri(string path, QueryParam[] parameters)
+        {
+            string queryString = String.Join("&", parameters.Select(r => r));
+            return String.IsNullOrEmpty(queryString) ? path : $"{path}?{queryString}";
+        }
+
+        #region Dispose
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (HttpClient != null)
+                {
+                    HttpClient.Dispose();
+                    HttpClient = null;
+                }
+            }
+        }
+        #endregion
     }
 }
