@@ -6,7 +6,9 @@ namespace Win32Tools
     {
         static void Main(string[] args)
         {
-            SampleWebApiClient.Run();
+            //SampleLorem.Run();
+            //SampleWebApiClient.Run();
+            SampleJsonDb.Run();
         }
     }
 }

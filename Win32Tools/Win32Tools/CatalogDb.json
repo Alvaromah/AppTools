@@ -1,0 +1,31 @@
+{
+  "Id": 1234,
+  "Name": "Catalog",
+  "DateTime": "2017-10-14T15:06:05.6607159+02:00",
+  "ProductTypes": [
+    "Type 1",
+    "Type 2",
+    "Type 3",
+    "Type 1",
+    "Type 2",
+    "Type 3"
+  ],
+  "ProductItems": [
+    {
+      "Id": 1,
+      "Name": "Product 1"
+    },
+    {
+      "Id": 3,
+      "Name": "Product 3"
+    },
+    {
+      "Id": 1,
+      "Name": "Product 1"
+    },
+    {
+      "Id": 3,
+      "Name": "Product 3"
+    }
+  ]
+}
