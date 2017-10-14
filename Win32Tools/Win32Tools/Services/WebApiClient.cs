@@ -1,6 +1,6 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
@@ -126,6 +126,11 @@ namespace Win32Tools
             return await SendRequestAsync(path, HttpMethod.Post, content, parameters);
         }
 
+        public async Task<string> PostStreamAsync(string path, Stream content, params QueryParam[] parameters)
+        {
+            return await SendRequestStreamAsync(path, HttpMethod.Post, content, parameters);
+        }
+
         // PUT
         public async Task<TResult> PutAsync<TResult>(string path, object value, params QueryParam[] parameters)
         {
@@ -144,6 +149,11 @@ namespace Win32Tools
             return await SendRequestAsync(path, HttpMethod.Put, content, parameters);
         }
 
+        public async Task<string> PutStreamAsync(string path, Stream content, params QueryParam[] parameters)
+        {
+            return await SendRequestStreamAsync(path, HttpMethod.Put, content, parameters);
+        }
+
         // DELETE
         public async Task<TResult> DeleteAsync<TResult>(string path, params QueryParam[] parameters)
         {
@@ -160,15 +170,43 @@ namespace Win32Tools
         {
             string requestUri = BuildRequestUri(path, parameters);
 
-            var message = new HttpRequestMessage(method, requestUri);
-            if (content != null)
+            using (var message = new HttpRequestMessage(method, requestUri))
             {
-                message.Content = new StringContent(content, System.Text.Encoding.UTF8, "application/json");
+                if (content != null)
+                {
+                    using (var httpContent = new StringContent(content, System.Text.Encoding.UTF8, "application/json"))
+                    {
+                        message.Content = httpContent;
+                        using (var response = await SendRequestAsync(message))
+                        {
+                            return await response.Content.ReadAsStringAsync();
+                        }
+                    }
+                }
+                else
+                {
+                    using (var response = await SendRequestAsync(message))
+                    {
+                        return await response.Content.ReadAsStringAsync();
+                    }
+                }
             }
+        }
 
-            using (var response = await SendRequestAsync(message))
+        public async Task<string> SendRequestStreamAsync(string path, HttpMethod method, Stream content, QueryParam[] parameters)
+        {
+            string requestUri = BuildRequestUri(path, parameters);
+
+            using (var message = new HttpRequestMessage(method, requestUri))
             {
-                return await response.Content.ReadAsStringAsync();
+                using (var stream = new StreamContent(content))
+                {
+                    message.Content = stream;
+                    using (var response = await SendRequestAsync(message))
+                    {
+                        return await response.Content.ReadAsStringAsync();
+                    }
+                }
             }
         }
 

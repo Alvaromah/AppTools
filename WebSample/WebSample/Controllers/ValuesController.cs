@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Linq;
-using System.Collections.Generic;
+using System.Net;
 using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
 
 namespace WebSample.Controllers
 {
@@ -55,7 +53,7 @@ namespace WebSample.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             await Task.FromResult(true);
-            return Ok($"values {id}");
+            return Ok();
         }
     }
 
