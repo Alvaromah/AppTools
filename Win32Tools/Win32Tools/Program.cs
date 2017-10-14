@@ -7,8 +7,8 @@ namespace Win32Tools
         static void Main(string[] args)
         {
             //SampleLorem.Run();
-            //SampleWebApiClient.Run();
-            SampleJsonDb.Run();
+            SampleWebApiClient.Run();
+            //SampleJsonDb.Run();
         }
     }
 }

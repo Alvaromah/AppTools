@@ -43,18 +43,19 @@ namespace WebSample.Controllers
 
         // PUT api/values/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put(int id, [FromBody]string value)
+        public async Task<IActionResult> Put(int id, [FromBody]MyClass value)
         {
             await Task.FromResult(true);
-            return Ok($"values {id}, {value}");
+            value.Id = id;
+            return Ok(value);
         }
 
         // DELETE api/values/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id, [FromBody]string value)
+        public async Task<IActionResult> Delete(int id)
         {
             await Task.FromResult(true);
-            return Ok($"values {id}, {value}");
+            return Ok($"values {id}");
         }
     }
 

@@ -18,16 +18,28 @@ namespace Win32Tools
             {
                 cli.AuthorizationToken = "AuthorizationToken";
 
-                var result1 = cli.GetAsync<object>("api/values/1234", QueryParam.Create("param1", "p1"), QueryParam.Create("param2", "p2"));
-                Console.WriteLine(await result1);
+                try
+                {
+                    var result1 = await cli.GetAsync("api/values/1234", QueryParam.Create("param1", "p1"), QueryParam.Create("param2", "p2"));
+                    Console.WriteLine(result1);
 
-                var result2 = cli.PostAsync<MyClass>("api/values/1234", new MyClass { Name = "Sample" });
-                Console.WriteLine(await result2);
+                    var result2 = await cli.PostAsync<MyClass>("api/values/1234", new MyClass { Name = "Sample" });
+                    Console.WriteLine(result2);
+
+                    var result3 = await cli.PutAsync<MyClass>("api/values/1234", new MyClass { Name = "Sample" });
+                    Console.WriteLine(result3);
+
+                    var result4 = await cli.DeleteAsync("api/values/1234");
+                    Console.WriteLine(result4);
+                }
+                catch (HttpRequestException ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
 
                 try
                 {
-                    var resultError = cli.GetAsync<MyClass>("api/values/0", QueryParam.Create("param1", "p1"), QueryParam.Create("param2", "p2"));
-                    Console.WriteLine(await resultError);
+                    var resultError = await cli.GetAsync<MyClass>("api/values/0", QueryParam.Create("param1", "p1"), QueryParam.Create("param2", "p2"));
                 }
                 catch (HttpRequestException ex)
                 {

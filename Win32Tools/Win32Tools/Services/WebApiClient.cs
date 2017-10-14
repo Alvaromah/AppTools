@@ -126,6 +126,36 @@ namespace Win32Tools
             return await SendRequestAsync(path, HttpMethod.Post, content, parameters);
         }
 
+        // PUT
+        public async Task<TResult> PutAsync<TResult>(string path, object value, params QueryParam[] parameters)
+        {
+            string json = JsonConvert.SerializeObject(value, JsonSerializerSettings);
+            return await PutAsync<TResult>(path, json, parameters);
+        }
+
+        public async Task<TResult> PutAsync<TResult>(string path, string content = null, params QueryParam[] parameters)
+        {
+            string json = await PutAsync(path, content, parameters);
+            return JsonConvert.DeserializeObject<TResult>(json);
+        }
+
+        public async Task<string> PutAsync(string path, string content = null, params QueryParam[] parameters)
+        {
+            return await SendRequestAsync(path, HttpMethod.Put, content, parameters);
+        }
+
+        // DELETE
+        public async Task<TResult> DeleteAsync<TResult>(string path, params QueryParam[] parameters)
+        {
+            string json = await DeleteAsync(path, parameters);
+            return JsonConvert.DeserializeObject<TResult>(json);
+        }
+
+        public async Task<string> DeleteAsync(string path, params QueryParam[] parameters)
+        {
+            return await SendRequestAsync(path, HttpMethod.Delete, null, parameters);
+        }
+
         public async Task<string> SendRequestAsync(string path, HttpMethod method, string content = null, params QueryParam[] parameters)
         {
             string requestUri = BuildRequestUri(path, parameters);
@@ -136,15 +166,21 @@ namespace Win32Tools
                 message.Content = new StringContent(content, System.Text.Encoding.UTF8, "application/json");
             }
 
-            using (var response = await HttpClient.SendAsync(message))
+            using (var response = await SendRequestAsync(message))
             {
-                string responseContent = await response.Content.ReadAsStringAsync();
-                if (response.IsSuccessStatusCode)
-                {
-                    return responseContent;
-                }
-                throw new HttpRequestException($"{(int)response.StatusCode} {response.StatusCode}: {responseContent}");
+                return await response.Content.ReadAsStringAsync();
             }
+        }
+
+        private async Task<HttpResponseMessage> SendRequestAsync(HttpRequestMessage message)
+        {
+            var response = await HttpClient.SendAsync(message);
+            if (response.IsSuccessStatusCode)
+            {
+                return response;
+            }
+            string responseContent = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException($"{(int)response.StatusCode} {response.StatusCode}: {responseContent}");
         }
 
         private static string BuildRequestUri(string path, QueryParam[] parameters)
